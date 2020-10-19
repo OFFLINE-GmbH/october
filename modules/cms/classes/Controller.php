@@ -372,6 +372,26 @@ class Controller
          * Execute AJAX event
          */
         if ($useAjax && $ajaxResponse = $this->execAjaxHandlers()) {
+            /**
+             * @event cms.request.end
+             * Fires after a request (Page or AJAX) has been processed by the CMS.
+             *
+             * Example usage:
+             *
+             *     Event::listen('cms.request.end', function ((\Cms\Classes\Controller) $controller) {
+             *         return Response::make('Taking over the cms request!', 200);
+             *     });
+             *
+             * Or
+             *
+             *     $CmsController->bindEvent('request.end', function () {
+             *         return Response::make('Taking over the cms request!', 200);
+             *     });
+             *
+             */
+            if ($event = $this->fireSystemEvent('cms.request.end')) {
+                return $event;
+            }
             return $ajaxResponse;
         }
 
@@ -385,6 +405,9 @@ class Controller
             ($handlerResponse = $this->runAjaxHandler($handler)) &&
             $handlerResponse !== true
         ) {
+            if ($event = $this->fireSystemEvent('cms.request.end')) {
+                return $event;
+            }
             return $handlerResponse;
         }
 
@@ -392,6 +415,9 @@ class Controller
          * Execute page lifecycle
          */
         if ($cycleResponse = $this->execPageCycle()) {
+            if ($event = $this->fireSystemEvent('cms.request.end')) {
+                return $event;
+            }
             return $cycleResponse;
         }
 
@@ -435,6 +461,9 @@ class Controller
         $result = $template->render($this->vars);
         CmsException::unmask();
 
+        if ($event = $this->fireSystemEvent('cms.request.end')) {
+            return $event;
+        }
         return $result;
     }
 
